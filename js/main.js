@@ -286,6 +286,7 @@ const setActions = () => {
 }
 
 const traceTarget = () => {
+  console.warn('scene', scene)
   setInterval(() => {
     console.warn('skySphere rotation', { ...skySphere.rotation })
   }, 2000)
@@ -305,10 +306,9 @@ const init = () => {
   setFlyControls()
   setGUI()
   animate()
-  setActions()
-  traceTarget()
+  // setActions()
+  // traceTarget()
 }
 
 init()
 
-console.warn('scene', scene)
