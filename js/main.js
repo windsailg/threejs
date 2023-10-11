@@ -7,12 +7,12 @@ import { GUI } from './lil-gui.module.min.js'
 // import { Sky } from 'https://cdn.jsdelivr.net/npm/three-skybox@0.0.2/index.min.js'
 
 const CONSTANTS = {
-  CAMERA_FOV: 100,
+  CAMERA_FOV: 50,
   CCAMERA_NEAR_DISTANCE: 1,
-  CCAMERA_FAR_DISTANCE: 4000,
-  CONTROLS_MIN_DISTANCE: 30,
-  CONTROLS_MAX_DISTANCE: 1000,
-  SKY_SPHARE_SIZE: 1000,
+  CCAMERA_FAR_DISTANCE: 2000,
+  CONTROLS_MIN_DISTANCE: 20,
+  CONTROLS_MAX_DISTANCE: 500,
+  SKY_SPHARE_SIZE: 500,
 }
 
 const textureLoader = new THREE.TextureLoader()
@@ -53,7 +53,7 @@ const createCamera = () => {
     CONSTANTS.CCAMERA_NEAR_DISTANCE,
     CONSTANTS.CCAMERA_FAR_DISTANCE,
   )
-  camera.position.z = 5
+  camera.position.z = 50
 }
 
 const createRenderer = () => {
@@ -82,9 +82,12 @@ const createSphare = () => {
     occMap,
     displacementMap,
   } = texture_lapis
+
+  const bg = textureLoader.load('textrue/00.jpg')
   const PhongOption = {
     map: colorMap,
     normalMap,
+    envMap: bg,
     // alphaMap,
     // occMap,
     // roughnessMap,
@@ -93,6 +96,7 @@ const createSphare = () => {
     shininess: 10,
     combine: 1,
     refractionRatio: 0,
+    emissiveIntensity: 10,
   }
   // const StandardOption = {
   //   map,
@@ -103,7 +107,7 @@ const createSphare = () => {
   // }
   materialPhong = new THREE.MeshPhongMaterial(PhongOption) // 材質類型
   // materialStandard = new THREE.MeshStandardMaterial(StandardOption)
-  const geometry = new THREE.SphereGeometry(25, 64, 64) // 多面體類型
+  const geometry = new THREE.SphereGeometry(12, 64, 64) // 多面體類型
   spherePhong = new THREE.Mesh(geometry, materialPhong) // 建立網絡
   // sphereStandard = new THREE.Mesh(geometry, materialStandard)
   scene.add(spherePhong)
@@ -206,19 +210,23 @@ const setClock = () => {
 setClock()
 
 const setControls = () => {
-  // const controls = new FlyControls(camera, renderer.domElement)
   const controls = new OrbitControls(camera, renderer.domElement)
-
-  // controls.movementSpeed = 1000
-  // controls.domElement = renderer.domElement
-  // controls.rollSpeed = Math.PI / 12
-  // controls.autoForward = false
-  // controls.dragToLook = false
   camera.position.set(0, 200, 100)
   controls.target.set(0, -0.08, 0.11)
   controls.minDistance = CONSTANTS.CONTROLS_MIN_DISTANCE
   controls.maxDistance = CONSTANTS.CONTROLS_MAX_DISTANCE
   controls.update()
+}
+
+let flyControls
+const setFlyControls = () => {
+  flyControls = new FlyControls(camera, renderer.domElement)
+  flyControls.movementSpeed = 300
+  flyControls.domElement = renderer.domElement
+  flyControls.rollSpeed = Math.PI / 6
+  flyControls.autoForward = false
+  flyControls.dragToLook = false
+  flyControls.update(0)
 }
 
 const setGUI = () => {
@@ -232,6 +240,9 @@ const setGUI = () => {
   SphareFolder.add(materialPhong, 'reflectivity', 0, 1)
     .step(0.01)
     .name('Reflectivity')
+  SphareFolder.add(materialPhong, 'emissiveIntensity', 0, 100)
+    .step(1)
+    .name('Emissive Intensity')
   const TextrueFolder = gui.addFolder('Textrue')
   TextrueFolder.add(materialPhong, 'shininess', 0, 1000)
     .step(0.01)
@@ -243,6 +254,10 @@ const animate = () => {
   spherePhong.rotation.y += 0.0005
   skySphere.rotation.x += 0.0001
   skySphere.rotation.y += 0.0002
+  skySphere.position.x += 0.1
+  skySphere.position.x = camera.position.x
+  skySphere.position.y = camera.position.y
+  skySphere.position.z = camera.position.z
   scene.children.forEach((c) => {
     const name = c.name.split('-')
     if (name[0] === 'cube') {
@@ -251,6 +266,7 @@ const animate = () => {
       c.rotation.z += 0.0004
     }
   })
+  flyControls.update(0.005)
   renderer.autoClear = false
   renderer.clear()
   renderer.render(scene, camera)
@@ -269,6 +285,11 @@ const setActions = () => {
   document.onkeyup = traceDate
 }
 
+const traceTarget = () => {
+  setInterval(() => {
+    console.warn('skySphere rotation', { ...skySphere.rotation })
+  }, 2000)
+}
 const init = () => {
   createScene()
   createCamera()
@@ -280,10 +301,12 @@ const init = () => {
   createEnvLight()
   createSpotLight()
   setClock()
-  setControls()
+  // setControls()
+  setFlyControls()
   setGUI()
   animate()
   setActions()
+  traceTarget()
 }
 
 init()
